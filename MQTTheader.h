@@ -16,11 +16,6 @@
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
 
-
-/**
- * TODO segfault on exit when listening to 2 and more topics: fix !
- */
-
 namespace MQTThead
 {
     using namespace std;
@@ -40,20 +35,23 @@ namespace MQTThead
      * @param elem
      * @param msg
      */
-    void appendMessage(tTopicCont *head ,string topic, string cont){
+    void appendMessage(tTopicCont *head, string topic, string cont){
         if(head->topic == "null"){
             head->topic = topic;
         }
 
-        tTopicCont *temp = head;
+        tTopicCont *temp = (tTopicCont*)malloc(sizeof(tTopicCont));
+        temp = head;
         while(temp->topic != topic){
             if(temp->next != nullptr)
                 temp = temp->next;
             else{
-                tTopicCont *newPtr;// = malloc(sizeof(tTopicCont));
+                tTopicCont *newPtr = (tTopicCont*)malloc(sizeof(tTopicCont));
                 newPtr->topic = topic;
                 newPtr->cont = cont;
                 newPtr->next = nullptr;
+
+                temp->next = newPtr;
                 return;
             }
         }
@@ -74,7 +72,7 @@ namespace MQTThead
         mqtt::connect_options connOpts;
         connOpts.set_keep_alive_interval(20);
 
-        tTopicCont *headptr; //= malloc(sizeof(tTopicCont));
+        tTopicCont *headptr = (tTopicCont*)malloc(sizeof(tTopicCont));
         headptr->topic = "null";
         headptr->next = nullptr;
 
