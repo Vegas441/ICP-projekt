@@ -16,10 +16,18 @@
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
 
+
+/**
+ * TODO segfault on exit when listening to 2 and more topics: fix !
+ */
+
 namespace MQTThead
 {
     using namespace std;
 
+    /**
+     * @brief Structure for topic and history of messages
+     */
     typedef struct topicContents {
         string topic;
         string cont;
@@ -29,32 +37,66 @@ namespace MQTThead
 
     /**
      *
+     * @param elem
+     * @param msg
+     */
+    void appendMessage(tTopicCont *head ,string topic, string cont){
+        if(head->topic == "null"){
+            head->topic = topic;
+        }
+
+        tTopicCont *temp = head;
+        while(head->topic != topic){
+            if(temp->next != nullptr)
+                temp = temp->next;
+            else{
+                tTopicCont *newPtr;// = malloc(sizeof(tTopicCont));
+                newPtr->topic = topic;
+                newPtr->cont = cont;
+                newPtr->next = nullptr;
+                return;
+            }
+        }
+        temp->cont.append(cont);
+    }
+
+
+    /**
+     *
      * @param ADDRESS
      * @param USER_ID
      * @param TOPIC
      * @return
      */
-    int MQTTfeed(string ADDRESS, string USER_ID, vector<string> TOPIC){
+    int MQTTfeed(string ADDRESS, string USER_ID, vector<string> TOPICS){
 
         mqtt::client MQTTclient(ADDRESS, USER_ID);
         mqtt::connect_options connOpts;
         connOpts.set_keep_alive_interval(20);
 
+        tTopicCont *headptr; //= malloc(sizeof(tTopicCont));
+        headptr->topic = "null";
+        headptr->next = nullptr;
+
         try {
+            //Connection
             MQTTclient.connect(connOpts);
             cout << "Connected to " << ADDRESS << endl;
 
-            MQTTclient.subscribe(TOPIC,{0,0});
+            //Subscribing to topics
+            for( auto &topic : TOPICS) {
+                MQTTclient.subscribe(topic, 0);
+            }
 
-            while(true) {
+            while (true) {
                 auto msg = MQTTclient.consume_message();
 
-                if(msg) {
-                    if (msg->get_topic() == "command" &&
-                        msg->to_string() == "exit") {
+                if (msg) {
+                    if (msg->to_string() == "exit") {
                         cout << "Exit command recieved" << endl;
                         break;
                     }
+                    appendMessage(headptr,msg->get_topic(),msg->to_string());
                     cout << msg->get_topic() << ": " << msg->to_string() << endl;
                 }
                 /*
@@ -65,19 +107,16 @@ namespace MQTThead
                     }
                     cout << "Reestablishing connection" << endl;
                 }
-                 */
-
+                */
             }
-
             //Disconnection
-            cout << "Disconnecting" << endl;
             MQTTclient.disconnect();
-            cout << "Disconnected"  << endl;
+            cout << "Disconnected" << endl;
 
         }
-        catch (const mqtt::exception& exc){
+        catch (const mqtt::exception &exc) {
             cerr << "Connection error: " << exc.what()
-                 << "[" << exc.get_reason_code() << "]" << endl;
+            << "[" << exc.get_reason_code() << "]" << endl;
             return 1;
         }
         return 0;

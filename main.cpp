@@ -19,9 +19,9 @@ int main() {
 
     string ADDRESS = "tcp://localhost:1883";
     string CL_ID = "paho_cpp_sync_consume";
-    vector<string> TOPIC = { "command" , "misc" };
+    vector<string> TOPICS = { "command" , "misc" };
 
-    MQTThead::MQTTfeed(ADDRESS,CL_ID,TOPIC);
+    MQTThead::MQTTfeed(ADDRESS,CL_ID,TOPICS);
 
 
 
