@@ -46,7 +46,7 @@ namespace MQTThead
         }
 
         tTopicCont *temp = head;
-        while(head->topic != topic){
+        while(temp->topic != topic){
             if(temp->next != nullptr)
                 temp = temp->next;
             else{
