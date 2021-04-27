@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <ctime>
 #include <mqtt/client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
@@ -22,12 +23,23 @@ namespace MQTThead
 
     /**
      * @brief Structure for topic and history of messages
+     * @
      */
-    typedef struct topicContents {
-        string topic;
-        string cont;
-        struct topicContents *next;
-    }tTopicCont;
+
+    class tTopicCont {
+        public:
+            string topic;
+            string cont;
+            char* last_update;
+            tTopicCont *next;
+
+            tTopicCont(){
+                topic = "null";
+                cont = "null";
+                last_update = nullptr;
+                next = nullptr;
+            }
+    };
 
 
     /**
@@ -35,20 +47,28 @@ namespace MQTThead
      * @param elem
      * @param msg
      */
-    void appendMessage(tTopicCont *head, string topic, string cont){
+    void appendMessage(tTopicCont *head, const string& topic, const string& cont){
         if(head->topic == "null"){
             head->topic = topic;
+            head->cont = cont;
+            head->cont.append("\n");
+            const time_t givemetime = time(nullptr);
+            head->last_update = asctime(localtime(&givemetime));
+            return;
         }
 
-        tTopicCont *temp = (tTopicCont*)malloc(sizeof(tTopicCont));
-        temp = head;
+        auto *temp = head;
         while(temp->topic != topic){
             if(temp->next != nullptr)
                 temp = temp->next;
             else{
-                tTopicCont *newPtr = (tTopicCont*)malloc(sizeof(tTopicCont));
+                auto *newPtr = new tTopicCont();
                 newPtr->topic = topic;
                 newPtr->cont = cont;
+                newPtr->cont.append("\n");
+
+                const time_t givemetime = time(nullptr);
+                newPtr->last_update = asctime(localtime(&givemetime));
                 newPtr->next = nullptr;
 
                 temp->next = newPtr;
@@ -56,8 +76,29 @@ namespace MQTThead
             }
         }
         temp->cont.append(cont);
+        temp->cont.append("\n");
+        const time_t givemetime = time(nullptr);
+        temp->last_update = asctime(localtime(&givemetime));
     }
 
+    /**
+     * @brief prints contents of message structure
+     * @param head
+     */
+    void print_struct(tTopicCont *head){
+        auto *tmp = head;
+        cout << "-----STRUCTURE-CONTENTS------" << endl;
+        do{
+            cout << "--Topic: " << tmp->topic << endl;
+            cout << "--Last message recieved at: "  << tmp->last_update;
+            cout << "--Messages: " << endl << tmp->cont << endl;
+            if(tmp->next == nullptr)
+                break;
+            tmp = tmp->next;
+        }while(true);
+        cout << "-----STRUCTURE-CONTENTS------" << endl;
+
+    }
 
     /**
      *
@@ -66,15 +107,13 @@ namespace MQTThead
      * @param TOPIC
      * @return
      */
-    int MQTTfeed(string ADDRESS, string USER_ID, vector<string> TOPICS){
+    int MQTTfeed(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS){
 
         mqtt::client MQTTclient(ADDRESS, USER_ID);
         mqtt::connect_options connOpts;
         connOpts.set_keep_alive_interval(20);
 
-        tTopicCont *headptr = (tTopicCont*)malloc(sizeof(tTopicCont));
-        headptr->topic = "null";
-        headptr->next = nullptr;
+        auto *headptr = new tTopicCont();
 
         try {
             //Connection
@@ -82,7 +121,7 @@ namespace MQTThead
             cout << "Connected to " << ADDRESS << endl;
 
             //Subscribing to topics
-            for( auto &topic : TOPICS) {
+            for( auto &topic : TOPICS ) {
                 MQTTclient.subscribe(topic, 0);
             }
 
@@ -94,8 +133,8 @@ namespace MQTThead
                         cout << "Exit command recieved" << endl;
                         break;
                     }
+                    //cout << msg->get_topic() << ": " << msg->to_string() << endl;
                     appendMessage(headptr,msg->get_topic(),msg->to_string());
-                    cout << msg->get_topic() << ": " << msg->to_string() << endl;
                 }
                 /*
                 else if(!MQTTclient.is_connected()) {
@@ -107,6 +146,7 @@ namespace MQTThead
                 }
                 */
             }
+            print_struct(headptr);
             //Disconnection
             MQTTclient.disconnect();
             cout << "Disconnected" << endl;
