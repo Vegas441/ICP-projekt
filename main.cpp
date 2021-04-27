@@ -21,5 +21,5 @@ int main() {
     string CL_ID = "paho_cpp_sync_consume";
     vector<string> TOPICS = { "command" , "misc1" , "misc2"};
 
-    MQTThead::MQTTfeed(ADDRESS,CL_ID,TOPICS);
+    MQTThead::MQTT_subscribe(ADDRESS,CL_ID,TOPICS);
 }

@@ -1,6 +1,8 @@
-//
-// Created by david on 25. 4. 2021.
-//
+/**
+ * @author David Svaty
+ * @date 25.4.2021
+ * @brief MQTT client header
+ */
 
 #ifndef ICP_MQTTHEADER_H
 #define ICP_MQTTHEADER_H
@@ -17,15 +19,14 @@
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
 
+//TODO repair date
 namespace MQTThead
 {
     using namespace std;
 
     /**
-     * @brief Structure for topic and history of messages
-     * @
+     * @class class for topic and history of messages
      */
-
     class tTopicCont {
         public:
             string topic;
@@ -43,7 +44,7 @@ namespace MQTThead
 
 
     /**
-     *
+     * @brief
      * @param elem
      * @param msg
      */
@@ -82,8 +83,8 @@ namespace MQTThead
     }
 
     /**
-     * @brief prints contents of message structure
-     * @param head
+     * @brief Prints contents of message structure
+     * @param head Pointer to head of linked list
      */
     void print_struct(tTopicCont *head){
         auto *tmp = head;
@@ -101,13 +102,13 @@ namespace MQTThead
     }
 
     /**
-     *
-     * @param ADDRESS
+     * @brief Establishes connection to server and puts messages from subscribed topics into linked list
+     * @param ADDRESS server adresss
      * @param USER_ID
-     * @param TOPIC
-     * @return
+     * @param TOPICS vector of topics which to subscribe from
+     * @return 1 on error, 0 on success
      */
-    int MQTTfeed(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS){
+    int MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS){
 
         mqtt::client MQTTclient(ADDRESS, USER_ID);
         mqtt::connect_options connOpts;
