@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/ICP.dir/MQTTheader.cpp.o"
   "CMakeFiles/ICP.dir/main.cpp.o"
   "ICP"
   "ICP.pdb"

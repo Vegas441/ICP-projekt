@@ -1,8 +1,14 @@
-MQTT: MQTT.o
-	g++ -std=c++17 -pthread -lpaho-mqtt3c -lpaho-mqttpp3 MQTT.o -o MQTTtest
+CC = g++
+CFLAGS = -std=c++17 -pthread -lpaho-mqtt3c -lpaho-mqttpp3
 
-MQTT.o: main.cpp
-	g++ -c -std=c++17 -pthread -lpaho-mqtt3c -lpaho-mqttpp3 main.cpp -o MQTT.o
+MQTTtest: main.o MQTTheader.o
+	$(CC) $(CFLAGS) $< -o $@
+
+main.o: main.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+MQTTheader.o: MQTTheader.cpp MQTTheader.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm *.o $(objects)
+	-rm *.o MQTTtest
