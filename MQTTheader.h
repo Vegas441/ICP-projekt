@@ -33,6 +33,10 @@ namespace MQTThead
 
             string recv;
             string sent;
+
+            string last_recv_msg;
+            string last_pub_msg;
+
             string last_recv;
             string last_pub;
             tTopicCont *next;
