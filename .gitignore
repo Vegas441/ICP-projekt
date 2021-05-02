@@ -72,9 +72,11 @@
 # .idea/modules
 # *.iml
 # *.ipr
+.idea
 
 # CMake
 cmake-build-*/
+cmake-build-debug
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -106,3 +108,4 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
+/cmake-build-debug/

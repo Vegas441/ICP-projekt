@@ -18,11 +18,19 @@
 #include <mqtt/topic.h>
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
+#include <QMainWindow>
+#include "ui_mainwindow.h"
+#include "connectdialog.h"
+#include <QInputDialog>
+#include <QMessageBox>
+#include "mainwindow.h"
 
 //TODO repair date
 namespace MQTThead
 {
     using namespace std;
+
+    extern vector<tuple <QString, vector<QString>>> messageHistory;
 
     /**
      * @class class for topic and history of messages
@@ -67,7 +75,7 @@ namespace MQTThead
      * @param headptr Pointer to message structure
      * @return 1 on error, 0 on success
      */
-    int MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr);
+    int MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr, Ui::MainWindow *ui);
 
     /**
      * @brief Establishes connection to server and publishes messages to topics

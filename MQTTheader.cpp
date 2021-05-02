@@ -20,6 +20,12 @@
 using namespace std;
 using namespace MQTThead;
 
+namespace  MQTThead{
+    // Define vector
+    vector<tuple <QString, vector<QString>>> messageHistory;
+}
+
+
 MQTThead::tTopicCont::tTopicCont() {
     topic="null";
     recv="null";
@@ -129,32 +135,61 @@ void MQTThead::print_struct(tTopicCont *head){
 }
 
 
-int MQTThead::MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr){
+int MQTThead::MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr, Ui::MainWindow *ui){
 
     mqtt::client MQTTclient(ADDRESS, USER_ID);
     mqtt::connect_options connOpts;
     connOpts.set_keep_alive_interval(10);
 
     try {
+        int messageCnt = 0;
         //Connection
         MQTTclient.connect(connOpts);
         cout << "Connected to " << ADDRESS << endl;
-
+        vector<QTreeWidgetItem*> topicList;
          //Subscribing to topics
          for( auto &topic : TOPICS ) {
+             QTreeWidgetItem *result;
              MQTTclient.subscribe(topic, 0);
+             result = setTreeRoot(ui, QString::fromStdString(topic));
+             topicList.push_back(result);
+             // Pushback topics with empty message vector
+             std::vector<QString> history;
+             messageHistory.push_back(std::make_tuple(QString::fromStdString(topic), history));
          }
-
          while (true) {
              auto msg = MQTTclient.consume_message();
 
              if (msg) {
+                 messageCnt ++;
                  //TODO exit bude ovladany uzivatelom
                  if (msg->to_string() == "exit") {
                      cout << "Exit command recieved" << endl;
                      break;
                  }
-                 //cout << msg->get_topic() << ": " << msg->to_string() << endl;
+                 cout << msg->get_topic() << ": " << msg->to_string() << endl;
+                 // Update GUI
+                 int i = 0;
+                 for( auto &topic : TOPICS ) {
+                     // Find matching topic from initial topic list
+                     if (topic == msg->get_topic()) {
+                         string message = msg->to_string(); // For TreeWidget only
+                         // Shorten the topic to fit the widget
+                         if (msg->to_string().size() > 8)
+                             message = message.substr(0, 8) + "...";
+                         // Update TreeWidget item
+                         updateTreeChild(topicList[i], QString::fromStdString(msg->get_topic() + ": " + message +
+                                                                              "    [messages: " + std::to_string(messageCnt) + "]"));
+                         // Update tuple
+                         std::vector<QString> tmp_history = std::get<1>(messageHistory[i]); // Get vector of messages
+                         std::tuple <QString, std::vector<QString>> tmp_tuple = messageHistory[i]; // Get temporary tuple
+                         tmp_history.push_back(QString::fromStdString(msg->to_string())); // Add newest message to history
+                         // Replace original tuple with temporary one with newest message added to history
+                         messageHistory[i] = std::make_tuple(QString::fromStdString(msg->get_topic()), tmp_history);
+                         break;
+                     }
+                     i++;
+                 }
                  appendMessage(headptr,msg->get_topic(),msg->to_string(),true);
              }
          }
