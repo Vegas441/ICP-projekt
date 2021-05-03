@@ -33,6 +33,10 @@ private slots:
 
     void on_treeWidget_itemClicked(QTreeWidgetItem *item, int column);
 
+    void on_toolButton_clicked();
+
+    void on_ExWindowView_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

@@ -5,12 +5,16 @@
 #include "connectdialog.h"
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QTextEdit>
 #include <QtConcurrent/QtConcurrentRun>
 #include "../MQTTheader.h"
 #include "../MQTTheader.cpp"
 #include <mqtt/client.h>
 using namespace MQTThead;
 
+int historyLimit = 0;
+QTreeWidgetItem *currentTreeItem = nullptr;
+std::tuple <QString, QString> externalView;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     displayTree();
+    ui->tabWidget->setCurrentIndex(0);
 }
 
 MainWindow::~MainWindow()
@@ -28,7 +33,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-
+    if (currentTreeItem != nullptr);
+        MainWindow::on_treeWidget_itemClicked(currentTreeItem, 0);
 }
 
 void MainWindow::on_actionConnect_triggered()
@@ -87,12 +93,21 @@ void addHistoryItem(Ui::MainWindow *ui, QString text)
 {
     QListWidgetItem *item = new QListWidgetItem(ui->listWidget_2);
     item->setText(text);
-    ui->listWidget_2->addItem(item);
+    ui->listWidget_2->insertItem(0, item);
+}
+
+void addValueItem(Ui::MainWindow *ui, QString text)
+{
+    QListWidgetItem *item = new QListWidgetItem(ui->listValue);
+    item->setText(text);
+    ui->listValue->addItem(item);
 }
 
 void MainWindow::on_treeWidget_itemClicked(QTreeWidgetItem *item, int column)
 {
-    ui->listWidget_2->clear(); // Clear the widget first
+    currentTreeItem = item;
+    ui->listWidget_2->clear(); // Clear the widgets first
+    ui->listValue->clear();
         for(int i = 0; i < int(MQTThead::messageHistory.size()); i++) {
             QString tmp_topic = std::get<0>(messageHistory[i]);
             std::vector<QString> tmp_history = std::get<1>(messageHistory[i]);
@@ -102,12 +117,57 @@ void MainWindow::on_treeWidget_itemClicked(QTreeWidgetItem *item, int column)
             QString item_topic = QString::fromStdString(token);
             //
             if (item_topic == tmp_topic) { // Match topic in message history with item topic
+                if (tmp_history.size() < 1) {
+                    break;
+                }
                 int count = 0;
-                for( auto &message : tmp_history ) { // Display the items in ListWidget
+                for( auto &pointer : tmp_history ) { // Display the items in ListWidget
+                    QString message = pointer;
                     count++;
+                    if (historyLimit != 0) {
+                        if (count > historyLimit) {
+                            break;
+                        }
+                    }
+                    if (message.size() > 20) {
+                        // Shorten the message if necessary
+                        std::string tmp_message = message.toStdString();
+                        tmp_message = tmp_message.substr(0, 20) + "...";
+                        message = QString::fromStdString(tmp_message);
+                    }
                     addHistoryItem(ui, QString::fromStdString(std::to_string(count)) + ". " + message);
                 }
+                // Display current value
+                QString current_message = tmp_history.back();
+                if (current_message.size() > 50) {
+                    // Shorten the message if necessary
+                    std::string tmp_message = current_message.toStdString();
+                    tmp_message = tmp_message.substr(0, 50) + "...";
+                    externalView = std::make_tuple(tmp_topic, current_message);
+                    current_message = QString::fromStdString(tmp_message);
+                    ui->ExWindowView->setEnabled(true);
+                }
+                addValueItem(ui, QString::fromStdString("Topic: " + tmp_topic.toStdString() + "\nMessage: " + current_message.toStdString()));
                 break;
             }
         }
+}
+
+void MainWindow::on_toolButton_clicked()
+{
+    bool ok;
+    QString historyLimitStr;
+    historyLimitStr = QInputDialog::getText(this, tr("Settings"), tr("Enter amount of messages to be shown in message history:"), QLineEdit::Normal, historyLimitStr, &ok);
+    ui->label_2->setText("Limit: " + historyLimitStr);
+    historyLimit = historyLimitStr.toInt();
+}
+
+
+void MainWindow::on_ExWindowView_clicked()
+{
+    QString message = std::get<1>(externalView);
+    ui->tab_3->setEnabled(true);
+    ui->textBrowser->clear();
+    ui->textBrowser->setText(message);
+    ui->tabWidget->setCurrentIndex(1);
 }
