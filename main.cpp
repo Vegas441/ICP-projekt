@@ -9,6 +9,7 @@
  */
 int main() {
     using namespace std;
+    extern vector<tuple <string, vector<string>>> topicTree;
     /**
      * Address and client id will be taken from GUI
     */
@@ -26,5 +27,5 @@ int main() {
     MQTThead::MQTT_publish(PAYLOAD,ADDRESS,CL_ID,TOPICS,headptr);
 
     MQTThead::print_struct(headptr);
-
+    MQTThead::get_subtopic_tree(headptr);
 }

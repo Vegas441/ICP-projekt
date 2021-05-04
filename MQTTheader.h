@@ -31,7 +31,7 @@ namespace MQTThead
     using namespace std;
 
     extern vector<tuple <QString, vector<QString>>> messageHistory;
-
+    extern vector<tuple <string, vector<string>>> topicTree;
     /**
      * @class class for topic and history of messages
      */
@@ -66,6 +66,14 @@ namespace MQTThead
      * @param head Pointer to head of linked list
      */
     void print_struct(tTopicCont *head);
+
+    /**
+     * @brief Goes trough topic list and returns their names in this form: vector< tuple <std::string, vector <std::string>>>
+     * @param headptr Pointer to the head of linked list of topics
+     * @return
+     */
+    void get_subtopic_tree(tTopicCont *headptr);
+
 
     /**
      * @brief Establishes connection to server and puts messages from subscribed topics into linked list

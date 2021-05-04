@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <regex>
 #include <mqtt/client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
@@ -15,14 +16,21 @@
 #include <mqtt/topic.h>
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
+//#include <QMainWindow>
+//#include "ui_mainwindow.h"
+//#include "connectdialog.h"
+//#include <QInputDialog>
+//#include <QMessageBox>
+//#include "mainwindow.h"
 
-//TODO repair date
 using namespace std;
 using namespace MQTThead;
 
 namespace  MQTThead{
     // Define vector
     vector<tuple <QString, vector<QString>>> messageHistory;
+
+    vector<tuple <string, vector<string>>> topicTree;
 }
 
 
@@ -134,6 +142,63 @@ void MQTThead::print_struct(tTopicCont *head){
     cout << "-----SENT-MESSAGES------" << endl;
 }
 
+void MQTThead::get_subtopic_tree(tTopicCont *headptr){
+    auto *tmp = headptr;
+    int i=0;
+    vector<vector<string>> v_vector;
+    vector<string> root_vector;
+
+    //puts all subtopics into v_vector
+    do{
+        if(regex_match(tmp->topic,regex("[A-Za-z0-9]*/[A-Za-z0-9#_]*"))) {
+            string s = tmp->topic.substr(0, tmp->topic.find("/"));
+            //regex expr ();
+            root_vector.push_back(s);    //pushes root topics
+            auto *tmpx = headptr;
+            do {
+                if (regex_match(tmpx->topic, regex("[A-Za-z0-9]*/[A-Za-z0-9#_]*"))
+                    && s.compare(tmp->topic.substr(0, tmpx->topic.find("/"))) == 0)
+                    v_vector[i].push_back(tmpx->topic);  //pushes subtopics
+                if (tmpx->next == nullptr)
+                    break;
+                tmpx = tmpx->next;
+            } while (tmpx->next != nullptr);
+            i++;
+        }
+        if(tmp->next == nullptr)
+            break;
+        tmp = tmp->next;
+    }while(tmp->next != nullptr);
+
+    i=0;
+    for( auto &s : root_vector ){
+        tuple<string,vector<string>>tpl = make_tuple(s,v_vector[i]);
+        topicTree.push_back(tpl);
+        i++;
+    }
+
+    //puts single topics(without subtopics) into tree
+    tmp = headptr;
+    do{
+        if (regex_match(tmp->topic,regex("[A-Za-z0-9#_]*"))){
+            string s = tmp->topic;
+            bool match = false;
+            for( auto &tpl : topicTree ){
+                if(s.compare(get<0>(tpl)) == 0) {
+                    match = true;
+                    break;
+                }
+            }
+            if(!match){
+                tuple<string,vector<string>> tpl = make_tuple(s,vector<string>());
+                topicTree.push_back(tpl);
+            }
+        }
+        if(tmp->next == nullptr)
+            break;
+        tmp = tmp->next;
+    }while(tmp->next != nullptr);
+}
 
 int MQTThead::MQTT_subscribe(const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr, Ui::MainWindow *ui){
 
