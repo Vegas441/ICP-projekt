@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 #include <regex>
+#include <fstream>
 #include <mqtt/client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
@@ -16,12 +17,12 @@
 #include <mqtt/topic.h>
 #include <MQTTAsync.h>
 #include <MQTTClient.h>
-//#include <QMainWindow>
-//#include "ui_mainwindow.h"
-//#include "connectdialog.h"
-//#include <QInputDialog>
-//#include <QMessageBox>
-//#include "mainwindow.h"
+#include <QMainWindow>
+#include "ui_mainwindow.h"
+#include "connectdialog.h"
+#include <QInputDialog>
+#include <QMessageBox>
+#include "mainwindow.h"
 
 using namespace std;
 using namespace MQTThead;
@@ -301,4 +302,38 @@ int MQTThead::MQTT_publish(const string& msg, const string& ADDRESS, const strin
     }
     return 0;
 }
+
+int MQTThead::MQTT_publish(ifstream& payload, const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr){
+    mqtt::client MQTTclient(ADDRESS, USER_ID);
+    mqtt::connect_options connOpts;
+    connOpts.set_keep_alive_interval(10);
+
+    try{
+        MQTTclient.connect(connOpts);
+        cout << "Connected to " << ADDRESS << endl;
+
+        for( auto &topic : TOPICS ){
+            string cont( (std::istreambuf_iterator<char>(payload)),
+                         (std::istreambuf_iterator<char>()));
+            mqtt::binary file_contents = cont;
+            auto pub_msg = mqtt::make_message(topic,cont);
+            pub_msg->set_qos(0);
+            MQTTclient.publish(pub_msg);
+            //appendMessage(headptr, topic, msg, false);
+        }
+
+        //Disconnection
+        MQTTclient.disconnect();
+        cout << "Disconnected" << endl;
+
+    }
+    catch(const mqtt::exception &exc){
+        cerr << "Connection error: " << exc.what()
+             << "[" << exc.get_reason_code() << "]" << endl;
+        return 1;
+    }
+    return 0;
+}
+
+
 

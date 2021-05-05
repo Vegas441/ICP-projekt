@@ -2,7 +2,7 @@
 #include <string>
 #include "MQTTheader.h"
 #include "MQTTheader.cpp"
-
+#include <fstream>
 /**
  *
  * @return
@@ -25,6 +25,10 @@ int main() {
 
     string PAYLOAD = "Hello World, this is a test message";
     MQTThead::MQTT_publish(PAYLOAD,ADDRESS,CL_ID,TOPICS,headptr);
+
+    //this is how you send binary files
+    //ifstream pld("some_binary_file.xyz",ios::binary);
+    //MQTThead::MQTT_publish(pld,ADDRESS,CL_ID,TOPICS,headptr);
 
     MQTThead::print_struct(headptr);
     MQTThead::get_subtopic_tree(headptr);

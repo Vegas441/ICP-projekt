@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <fstream>
 #include <mqtt/client.h>
 #include <mqtt/exception.h>
 #include <mqtt/message.h>
@@ -89,12 +90,23 @@ namespace MQTThead
      * @brief Establishes connection to server and publishes messages to topics
      * @param msg Message to be sent
      * @param ADDRESS Server address
-     * @param USER_ID
-     * @param TOPICS vector of topics to publish to
+     * @param USER_ID Username
+     * @param TOPICS Vector of topics to publish to
      * @param headptr Pointer to message structure
      * @return 1 on error, 0 on success
      */
     int MQTT_publish(const string& msg, const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr);
+
+    /**
+     * @brief Establishes connection to server and publishes binary file to topics
+     * @param payload Binary file pointer to be sent
+     * @param ADDRESS Server adress
+     * @param USER_ID Username
+     * @param TOPICS Vector of topics to publish to
+     * @param headptr Pointer to message structure
+     * @return 1 on error, 0 on success
+     */
+    int MQTT_publish(ifstream& payload, const string& ADDRESS, const string& USER_ID, const vector<string>& TOPICS, tTopicCont *headptr);
 }
 
 #endif //ICP_MQTTHEADER_H
